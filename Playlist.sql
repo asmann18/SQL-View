@@ -70,10 +70,72 @@ on ma.ArtistId=a.Id
 
  create view UserPlaylist
  as
- select u.Id, u.Username,m.Name from UserMusics um
+ select u.Id, u.Username,m.Name,a.Name Artist from UserMusics um
  join Users u
  on um.UserId=u.Id
  join Musics m
  on um.MusicId=m.Id
+ join MusicArtist ma
+ on ma.MusicId=m.Id
+ join Artists a
+ on ma.ArtistId=a.Id
+ 
 
  select*from UserPlaylist
+
+
+
+ --------------------------------------------------task 2-----------------------------------------------------
+
+
+
+ create procedure usp_CreateMusic @musicName nvarchar(128),@musicDuration int,@categoryId int
+ as
+ insert into Musics values (@musicName,@musicDuration,@categoryId)
+
+
+ exec usp_CreateMusic 'semmamme',120,1
+
+
+ create procedure usp_CreateUser @name  varchar(32),@userName varchar(32),@password varchar(64),@genderId int
+ as
+ insert into Users values(@name,@userName,@password,@genderId)
+
+
+ exec usp_CreateUser 'gunel','designer','dombili150',2
+
+
+ alter table Musics add IsDeleted bit default 0
+ 
+ create trigger delete_music_trigger
+ on Musics
+instead of delete
+as
+declare @result bit
+declare @id int
+select @result=IsDeleted,@id=deleted.Id from deleted
+if(@result=0)
+ begin
+ update Musics set IsDeleted=1 where Id=@id
+ end
+else
+begin
+ delete from Musics where Id=@id
+ end
+
+
+ delete from Musics where Id=3
+
+
+
+
+ create function GetUserArtistCountByUserId(@userId int)
+ returns int
+ begin
+ declare @result int
+ select @result=COUNT(Artist) from UserPlaylist
+ where Id=@userId
+ return @result
+ end
+
+ select dbo.GetUserArtistCountByUserId(1) as [count]
